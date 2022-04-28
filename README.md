@@ -32,6 +32,8 @@ The packet IDs are as follows:
 
 ### Packet header
 
+Size: 24 bytes
+
 ```c
 struct PacketHeader
 {
