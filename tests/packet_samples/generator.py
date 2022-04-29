@@ -30,6 +30,32 @@ def write_header():
         f.write(packed_header)
 
 
+def write_event_packet_FLTP():
+    packed_header = header.pack(2021, 1, 2, 1, 0, 1, 12.35, 123, 1, 255)
+    packed_event_data = packet_event_data.pack(
+        ord('F'), ord('L'), ord('T'), ord('P'))
+    packed_fastest_lap = fastest_lap.pack(1, 10.2)
+
+    with open("event_fltp.pkt", "wb") as f:
+        f.write(packed_header)
+        f.write(packed_event_data)
+        f.write(packed_fastest_lap)
+
+
+def write_event_packet_BUTN():
+    packed_header = header.pack(2021, 1, 2, 1, 0, 1, 12.35, 123, 1, 255)
+    packed_event_data = packet_event_data.pack(
+        ord('B'), ord('U'), ord('T'), ord('N'))
+    packed_buttons = buttons.pack(0x00001000)  # R2
+
+    with open("event_butn.pkt", "wb") as f:
+        f.write(packed_header)
+        f.write(packed_event_data)
+        f.write(packed_buttons)
+
+
 if __name__ == "__main__":
     # write_motion_packet()
-    write_header()
+    # write_header()
+    write_event_packet_FLTP()
+    write_event_packet_BUTN()

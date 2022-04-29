@@ -1,11 +1,11 @@
-use bytes::Buf;
+use bytes::{Buf, BytesMut};
 use std::io::Cursor;
 
 use crate::error::F1Error;
 
 pub const HEADER_SIZE: usize = 24;
 
-pub fn parse_header(buf: &mut Cursor<&[u8]>) -> Result<Header, F1Error> {
+pub fn parse_header(buf: &mut Cursor<&mut BytesMut>) -> Result<Header, F1Error> {
     let format = buf.get_u16_le();
     let version = (buf.get_u8(), buf.get_u8());
     let packet_version = buf.get_u8();
