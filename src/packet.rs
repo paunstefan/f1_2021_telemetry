@@ -14,7 +14,7 @@ use self::motion::*;
 #[derive(Debug, Clone, PartialEq)]
 pub enum PacketType {
     Motion(MotionData),
-    Event(),
+    Event(EventData),
     Unimplemented,
 }
 
@@ -30,7 +30,7 @@ pub fn parse_packet(buf: &mut Cursor<&mut BytesMut>) -> Result<Packet, F1Error> 
     let data = match header.packet_id {
         PacketId::Motion => PacketType::Motion(parse_motion_packet(buf)?),
 
-        PacketId::Event => todo!(),
+        PacketId::Event => PacketType::Event(parse_event_packet(buf)?),
         _ => PacketType::Unimplemented,
     };
 

@@ -10,4 +10,6 @@ pub enum F1Error {
     IncompleteData,
     #[error("IO error")]
     IoError(#[from] io::Error),
+    #[error("Can't convert byte array to string")]
+    UTF8Error(#[from] std::str::Utf8Error),
 }

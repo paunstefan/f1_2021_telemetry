@@ -11,3 +11,4 @@ thiserror = "1.0.30"
 tokio-util = { version = "0.7.1", features = ["codec", "net"] }
 tokio-stream = "0.1.8"
 tokio = "1.18.0"
+enum-iterator = "0.7.0"
