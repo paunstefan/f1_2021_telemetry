@@ -6,6 +6,10 @@ use crate::error::F1Error;
 pub const HEADER_SIZE: usize = 24;
 
 pub fn parse_header(buf: &mut Cursor<&mut BytesMut>) -> Result<Header, F1Error> {
+    if buf.remaining() < HEADER_SIZE {
+        return Err(F1Error::IncompleteData);
+    }
+
     let format = buf.get_u16_le();
     let version = (buf.get_u8(), buf.get_u8());
     let packet_version = buf.get_u8();

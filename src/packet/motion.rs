@@ -7,6 +7,10 @@ pub const MOTION_PACKET_SIZE: usize = 1464;
 pub const NUMBER_OF_CARS: usize = 22;
 
 pub fn parse_motion_packet(buf: &mut Cursor<&mut BytesMut>) -> Result<MotionData, F1Error> {
+    if buf.remaining() < MOTION_PACKET_SIZE {
+        return Err(F1Error::IncompleteData);
+    }
+
     let mut car_motion_data: [CarMotionData; NUMBER_OF_CARS] = [CarMotionData::default(); 22];
 
     for i in 0..NUMBER_OF_CARS {
