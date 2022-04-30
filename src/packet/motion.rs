@@ -2,8 +2,9 @@ use bytes::{Buf, BytesMut};
 use std::io::Cursor;
 
 use crate::error::F1Error;
+use crate::packet;
 
-pub const MOTION_PACKET_SIZE: usize = 1464;
+pub const MOTION_PACKET_SIZE: usize = 1464 - packet::header::HEADER_SIZE;
 pub const NUMBER_OF_CARS: usize = 22;
 
 pub fn parse_motion_packet(buf: &mut Cursor<&mut BytesMut>) -> Result<MotionData, F1Error> {

@@ -19,27 +19,148 @@ pub fn parse_event_packet(buf: &mut Cursor<&mut BytesMut>) -> Result<EventData, 
     let event_details = match event_string_code {
         EventCode::SessionStarted => SessionStarted,
         EventCode::SessionEnded => SessionEnded,
-        EventCode::FastestLap => todo!(),
-        EventCode::Retirement => todo!(),
+        EventCode::FastestLap => parse_fastest_lap(buf)?,
+        EventCode::Retirement => parse_retirement(buf)?,
         EventCode::DRSEnabled => DRSEnabled,
         EventCode::DRSDisabled => DRSDisabled,
-        EventCode::TeamMateInPits => todo!(),
+        EventCode::TeamMateInPits => parse_teammate_in_pits(buf)?,
         EventCode::ChequeredFlag => ChequeredFlag,
-        EventCode::RaceWinner => todo!(),
-        EventCode::PenaltyIssued => todo!(),
-        EventCode::SpeedTrapTriggered => todo!(),
-        EventCode::StartLights => todo!(),
+        EventCode::RaceWinner => parse_race_winner(buf)?,
+        EventCode::PenaltyIssued => parse_penalty(buf)?,
+        EventCode::SpeedTrapTriggered => parse_speed_trap(buf)?,
+        EventCode::StartLights => parse_start_lights(buf)?,
         EventCode::LightsOut => LightsOut,
-        EventCode::DriveThroughServed => todo!(),
-        EventCode::StopGoServed => todo!(),
-        EventCode::Flashback => todo!(),
-        EventCode::ButtonStatus => todo!(),
+        EventCode::DriveThroughServed => parse_drive_penalty(buf)?,
+        EventCode::StopGoServed => parse_stop_go_penalty(buf)?,
+        EventCode::Flashback => parse_flashback(buf)?,
+        EventCode::ButtonStatus => parse_buttons(buf)?,
     };
 
     Ok(EventData {
         event_string_code,
         event_details,
     })
+}
+
+fn parse_fastest_lap(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 5 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::FastestLap {
+        vehicle_idx: buf.get_u8(),
+        lap_time: buf.get_f32_le(),
+    })
+}
+
+fn parse_retirement(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 1 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::Retirement {
+        vehicle_idx: buf.get_u8(),
+    })
+}
+
+fn parse_teammate_in_pits(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 1 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::TeamMateInPits {
+        vehicle_idx: buf.get_u8(),
+    })
+}
+
+fn parse_race_winner(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 1 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::RaceWinner {
+        vehicle_idx: buf.get_u8(),
+    })
+}
+
+fn parse_penalty(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 7 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::Penalty {
+        penalty_type: buf.get_u8(),
+        infringement_type: buf.get_u8(),
+        vehicle_idx: buf.get_u8(),
+        other_vehicle_idx: buf.get_u8(),
+        time: buf.get_u8(),
+        lap_num: buf.get_u8(),
+        places_gained: buf.get_u8(),
+    })
+}
+
+fn parse_speed_trap(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 7 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::SpeedTrap {
+        vehicle_idx: buf.get_u8(),
+        speed: buf.get_f32_le(),
+        overall_fastest_in_session: buf.get_u8(),
+        driver_fastest_in_session: buf.get_u8(),
+    })
+}
+
+fn parse_start_lights(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 1 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::StartLights {
+        num_lights: buf.get_u8(),
+    })
+}
+
+fn parse_drive_penalty(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 1 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::DriveThroughPenaltyServed {
+        vehicle_idx: buf.get_u8(),
+    })
+}
+
+fn parse_stop_go_penalty(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 1 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::StopGoPenaltyServed {
+        vehicle_idx: buf.get_u8(),
+    })
+}
+
+fn parse_flashback(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 8 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    Ok(EventDataDetails::Flashback {
+        flashback_frame_identifier: buf.get_u32_le(),
+        flashback_session_time: buf.get_f32_le(),
+    })
+}
+
+fn parse_buttons(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1Error> {
+    if buf.remaining() < 4 {
+        return Err(F1Error::IncompleteData);
+    }
+
+    let flags = buf.get_u32_le();
+
+    todo!()
 }
 
 fn parse_event_code(buf: &mut Cursor<&mut BytesMut>) -> Result<EventCode, F1Error> {
@@ -109,7 +230,7 @@ pub enum EventDataDetails {
     },
 
     Buttons {
-        button_status: ButtonFlags,
+        button_status: std::collections::HashSet<ButtonFlags>,
     },
 }
 
@@ -162,7 +283,7 @@ impl TryFrom<String> for EventCode {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, PartialEq, IntoEnumIterator)]
+#[derive(Debug, Clone, PartialEq, IntoEnumIterator, Eq, Hash)]
 pub enum ButtonFlags {
     A = 0x00000001,
     Y = 0x00000002,
