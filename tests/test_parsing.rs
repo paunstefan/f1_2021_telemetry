@@ -257,7 +257,7 @@ fn test_parse_event_butn() {
         secondary_player_car_index: 255,
     };
 
-    let buttons_set = std::collections::HashSet::new();
+    let mut buttons_set = std::collections::HashSet::new();
 
     buttons_set.insert(packet::event::ButtonFlags::A);
     buttons_set.insert(packet::event::ButtonFlags::RT);

@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::{collections::HashSet, io::Cursor};
 
 use bytes::{Buf, BytesMut};
 use enum_iterator::IntoEnumIterator;
@@ -160,7 +160,17 @@ fn parse_buttons(buf: &mut Cursor<&mut BytesMut>) -> Result<EventDataDetails, F1
 
     let flags = buf.get_u32_le();
 
-    todo!()
+    let mut set = HashSet::new();
+
+    for button in ButtonFlags::into_enum_iter() {
+        let bit = button as u32;
+
+        if flags & bit != 0 {
+            set.insert(button);
+        }
+    }
+
+    Ok(EventDataDetails::Buttons { button_status: set })
 }
 
 fn parse_event_code(buf: &mut Cursor<&mut BytesMut>) -> Result<EventCode, F1Error> {
@@ -283,7 +293,7 @@ impl TryFrom<String> for EventCode {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, PartialEq, IntoEnumIterator, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, IntoEnumIterator, Eq, Hash)]
 pub enum ButtonFlags {
     A = 0x00000001,
     Y = 0x00000002,
