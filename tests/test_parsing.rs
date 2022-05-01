@@ -35,6 +35,7 @@ fn test_parse_header() {
 
 #[test]
 fn test_parse_motion() {
+    use f1_2021_telemetry::utils::*;
     use packet::motion::*;
 
     let header = packet::header::Header {
@@ -281,4 +282,117 @@ fn test_parse_event_butn() {
 
     assert_eq!(header, packet.header);
     assert_eq!(packet::PacketType::Event(event_data), packet.data);
+}
+
+#[test]
+fn test_parse_telemetry() {
+    use f1_2021_telemetry::utils::*;
+    use packet::car_telemetry::*;
+
+    let header = packet::header::Header {
+        format: 2021,
+        version: (1, 2),
+        packet_version: 1,
+        packet_id: packet::header::PacketId::CarTelemetry,
+        session_uid: 1,
+        session_time: 12.35,
+        frame_identifier: 123,
+        player_car_index: 1,
+        secondary_player_car_index: 255,
+    };
+
+    let telemetry_data = {
+        let mut car_telemetry_data: [CarTelemetryData; NUMBER_OF_CARS] =
+            [CarTelemetryData::default(); NUMBER_OF_CARS];
+
+        for i in 0..NUMBER_OF_CARS {
+            let speed = 123;
+            let throttle = 1.0;
+            let steer = 0.0;
+            let brake = 0.0;
+            let clutch = 0;
+            let gear = 7;
+            let engine_rpm = 1000;
+            let drs = false;
+            let rev_lights_percent = 50;
+            let rev_lights_bit = 0;
+            let brakes_temp = WheelsData {
+                rear_left: 100,
+                rear_right: 100,
+                front_left: 100,
+                front_right: 100,
+            };
+            let tyres_surface_temp = WheelsData {
+                rear_left: 200,
+                rear_right: 200,
+                front_left: 200,
+                front_right: 200,
+            };
+            let tyres_inner_temp = WheelsData {
+                rear_left: 200,
+                rear_right: 200,
+                front_left: 200,
+                front_right: 200,
+            };
+            let engine_temp = 1000;
+            let tyres_pressure = WheelsData {
+                rear_left: 50.0,
+                rear_right: 50.0,
+                front_left: 50.0,
+                front_right: 50.0,
+            };
+            let surface_type = WheelsData {
+                rear_left: 0,
+                rear_right: 0,
+                front_left: 0,
+                front_right: 0,
+            };
+
+            car_telemetry_data[i] = CarTelemetryData {
+                speed,
+                throttle,
+                steer,
+                brake,
+                clutch,
+                gear,
+                engine_rpm,
+                drs,
+                rev_lights_percent,
+                rev_lights_bit,
+                brakes_temp,
+                tyres_surface_temp,
+                tyres_inner_temp,
+                engine_temp,
+                tyres_pressure,
+                surface_type,
+            };
+        }
+
+        let mfd_panel_index = 3;
+        let mfd_panel_index_secondary = 4;
+        let suggested_gear = 0;
+
+        TelemetryData {
+            car_telemetry_data,
+            mfd_panel_index,
+            mfd_panel_index_secondary,
+            suggested_gear,
+        }
+    };
+
+    let mut f = File::open("tests/packet_samples/car_telemetry.pkt").expect("no file found");
+    let mut buf = vec![0u8; 2048];
+    let size = f.read(&mut buf).expect("buffer overflow");
+
+    let mut buf = BytesMut::from(&buf[..size]);
+
+    let mut cursor = Cursor::new(&mut buf);
+
+    let packet = parse_packet(&mut cursor).unwrap();
+
+    assert_eq!(header, packet.header);
+    assert_eq!(
+        packet::PacketType::CarTelemetry(telemetry_data),
+        packet.data
+    );
 }

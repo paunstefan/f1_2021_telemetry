@@ -6,6 +6,7 @@ use tokio_util::{codec::Decoder, udp::UdpFramed};
 
 pub mod error;
 pub mod packet;
+pub mod utils;
 
 pub struct F1_2021;
 

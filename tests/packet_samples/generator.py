@@ -8,6 +8,9 @@ packet_event_data = struct.Struct("<4B")
 fastest_lap = struct.Struct("<Bf")
 buttons = struct.Struct("<I")
 
+car_telemetry_data = struct.Struct("<H3fBbHBBH4H4B4BH4f4B")
+packet_car_telemetry_data = struct.Struct("<BBb")
+
 
 def write_motion_packet():
     packed_header = header.pack(2021, 1, 2, 1, 0, 1, 12.35, 123, 1, 255)
@@ -21,6 +24,19 @@ def write_motion_packet():
         for _ in range(22):
             f.write(packed_car_motion)
         f.write(packed_motion_data)
+
+
+def write_telemetry_packet():
+    packed_header = header.pack(2021, 1, 2, 1, 6, 1, 12.35, 123, 1, 255)
+    packed_car_telemetry = packet_car_telemetry_data.pack(3, 4, 0)
+    packed_telemetry_data = car_telemetry_data.pack(
+        123, 1.0, 0.0, 0.0, 0, 7, 1000, 0, 50, 0, 100, 100, 100, 100, 200, 200, 200, 200, 200, 200, 200, 200, 1000, 50, 50, 50, 50,  0, 0, 0, 0)
+
+    with open("car_telemetry.pkt", "wb") as f:
+        f.write(packed_header)
+        for _ in range(22):
+            f.write(packed_telemetry_data)
+        f.write(packed_car_telemetry)
 
 
 def write_header():
@@ -68,5 +84,6 @@ if __name__ == "__main__":
     # write_motion_packet()
     # write_header()
     # write_event_packet_FTLP()
-    write_event_packet_BUTN()
+    # write_event_packet_BUTN()
     # write_event_packet_SSTA()
+    write_telemetry_packet()

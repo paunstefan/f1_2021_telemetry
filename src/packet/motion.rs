@@ -4,16 +4,17 @@ use std::io::Cursor;
 
 use crate::error::F1Error;
 use crate::packet;
+use crate::utils::*;
 
 pub const MOTION_PACKET_SIZE: usize = 1464 - packet::header::HEADER_SIZE;
-pub const NUMBER_OF_CARS: usize = 22;
 
 pub fn parse_motion_packet(buf: &mut Cursor<&mut BytesMut>) -> Result<MotionData, F1Error> {
     if buf.remaining() < MOTION_PACKET_SIZE {
         return Err(F1Error::IncompleteData);
     }
 
-    let mut car_motion_data: [CarMotionData; NUMBER_OF_CARS] = [CarMotionData::default(); 22];
+    let mut car_motion_data: [CarMotionData; NUMBER_OF_CARS] =
+        [CarMotionData::default(); NUMBER_OF_CARS];
 
     for i in 0..NUMBER_OF_CARS {
         let world_positon = parse_coordinates_3d_f32(buf);
@@ -107,44 +108,4 @@ pub struct MotionData {
     pub angular_velocity: Coordinates3D<f32>,
     pub angular_acceleration: Coordinates3D<f32>,
     pub front_wheels_angle: f32,
-}
-
-#[derive(Debug, Clone, PartialEq, Default, Copy)]
-pub struct Coordinates3D<T> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
-}
-
-#[derive(Debug, Clone, PartialEq, Default, Copy)]
-pub struct WheelsData<T> {
-    pub rear_left: T,
-    pub rear_right: T,
-    pub front_left: T,
-    pub front_right: T,
-}
-
-fn parse_coordinates_3d_f32(buf: &mut Cursor<&mut BytesMut>) -> Coordinates3D<f32> {
-    Coordinates3D {
-        x: buf.get_f32_le(),
-        y: buf.get_f32_le(),
-        z: buf.get_f32_le(),
-    }
-}
-
-fn parse_coordinates_3d_i16(buf: &mut Cursor<&mut BytesMut>) -> Coordinates3D<i16> {
-    Coordinates3D {
-        x: buf.get_i16_le(),
-        y: buf.get_i16_le(),
-        z: buf.get_i16_le(),
-    }
-}
-
-fn parse_wheels_data_f32(buf: &mut Cursor<&mut BytesMut>) -> WheelsData<f32> {
-    WheelsData {
-        rear_left: buf.get_f32_le(),
-        rear_right: buf.get_f32_le(),
-        front_left: buf.get_f32_le(),
-        front_right: buf.get_f32_le(),
-    }
 }
