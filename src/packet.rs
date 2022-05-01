@@ -1,3 +1,4 @@
+#![allow(clippy::large_enum_variant)]
 use bytes::BytesMut;
 
 use crate::error::F1Error;
